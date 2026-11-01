@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% block title %}Cổng hệ thống{% endblock %}{% block content %}
+<div class="text-center py-5"><h1 class="mb-3">Hệ thống quản lý bán hàng</h1><p class="text-secondary mb-4">Chọn khu vực thao tác phù hợp với vai trò của bạn.</p>
+<div class="row justify-content-center g-4"><div class="col-md-4"><div class="card h-100 shadow-sm"><div class="card-body p-4"><h2 class="h4">Khách hàng</h2><p>Đăng ký tài khoản, đặt hàng và hủy đơn đang chờ xác nhận.</p><a class="btn btn-primary" href="{{ url_for('user_portal') }}">Vào khu vực khách hàng</a></div></div></div>
+<div class="col-md-4"><div class="card h-100 shadow-sm"><div class="card-body p-4"><h2 class="h4">Nhân viên</h2><p>Xác nhận đơn, lập hóa đơn và quản lý phân công giao hàng.</p><a class="btn btn-dark" href="{{ url_for('staff_portal') }}">Vào khu vực nhân viên</a></div></div></div></div></div>{% endblock %}

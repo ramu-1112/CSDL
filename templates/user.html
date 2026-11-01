@@ -1,0 +1,77 @@
+{% extends 'base.html' %}{% block title %}Khu vực khách hàng{% endblock %}{% block content %}
+<div class="d-flex justify-content-between align-items-center"><div><h1 class="h3">Khu vực khách hàng</h1><p class="text-secondary">Đăng ký, đặt hàng và quản lý yêu cầu hủy đơn.</p></div><a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Trang chủ</a></div>
+<ul class="nav nav-tabs mt-4"><li class="nav-item"><button class="nav-link {% if not lookup_cccd %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#register">Đăng ký người dùng</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#order">Đặt hàng</button></li><li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cancel">Hủy đơn hàng</button></li><li class="nav-item"><button class="nav-link {% if lookup_cccd %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#lookup">Tra cứu đơn hàng</button></li></ul>
+<div class="tab-content border border-top-0 rounded-bottom p-4 bg-white">
+<section class="tab-pane fade {% if not lookup_cccd %}show active{% endif %}" id="register"><h2 class="h5 mb-3">Đăng ký khách hàng</h2><form method="post" action="{{ url_for('create_customer') }}" class="row g-3">
+<div class="col-md-4"><label class="form-label">CCCD *</label><input class="form-control validate-field" name="cccd" data-rule="cccd" pattern="[0-9]{12}" maxlength="12" required><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-md-8"><label class="form-label">Họ tên *</label><input class="form-control validate-field" name="name" data-rule="name" required maxlength="100"><div class="validation-message small mt-1" aria-live="polite"></div></div>
+<div class="col-md-4"><label class="form-label">Ngày sinh</label><input class="form-control validate-field" type="date" name="birth_date" data-rule="birth"><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-md-4"><label class="form-label">Giới tính</label><select class="form-select validate-field" name="gender" data-rule="optional"><option value="">-- Chọn --</option><option>Nam</option><option>Nữ</option><option>Khác</option></select><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-md-4"><label class="form-label">Số điện thoại *</label><input class="form-control validate-field" name="phone" data-rule="phone" maxlength="15" required><div class="validation-message small mt-1" aria-live="polite"></div></div>
+<div class="col-md-6"><label class="form-label">Email</label><input class="form-control validate-field" type="email" name="email" data-rule="email"><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-md-6"><label class="form-label">Địa chỉ</label><input class="form-control validate-field" name="address" data-rule="optional"><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-12"><button class="btn btn-primary">Đăng ký</button></div></form></section>
+
+<section class="tab-pane fade" id="order"><h2 class="h5 mb-3">Tạo đơn hàng</h2><form method="post" action="{{ url_for('create_order') }}" class="row g-3">
+<div class="col-md-4"><label class="form-label">CCCD khách hàng *</label><input class="form-control validate-field" name="customer_cccd" data-rule="cccd" pattern="[0-9]{12}" maxlength="12" required><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-md-4"><label class="form-label">Phương thức thanh toán</label><select class="form-select validate-field" name="payment_method" data-rule="optional"><option value="">-- Chọn --</option><option>Tiền mặt</option><option>Chuyển khoản</option><option>COD</option></select><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-md-4"><label class="form-label">Tên người nhận *</label><input class="form-control validate-field" name="recipient" data-rule="name" required><div class="validation-message small mt-1" aria-live="polite"></div></div>
+<div class="col-md-4"><label class="form-label">SĐT người nhận *</label><input class="form-control validate-field" name="recipient_phone" data-rule="phone" required><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-md-8"><label class="form-label">Địa chỉ nhận hàng *</label><input class="form-control validate-field" name="recipient_address" data-rule="address" required><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-12"><label class="form-label">Ghi chú</label><input class="form-control validate-field" name="note" data-rule="optional"><div class="validation-message small mt-1" aria-live="polite"></div></div>
+<h3 class="h6 mt-4">Chọn sản phẩm</h3>
+<div class="row">
+{% for p in products %}
+<div class="col-md-4 mb-3">
+    <div class="card h-100">
+        <div class="card-body">
+            <div class="form-check">
+                <input class="form-check-input product-check" type="checkbox" name="product_ids" value="{{ p.MaSP }}" id="p{{ p.MaSP }}" {% if p.TongTonKho <= 0 %}disabled{% endif %}>
+                <label class="form-check-label fw-semibold" for="p{{ p.MaSP }}">{{ p.TenSP }}</label>
+            </div>
+            <div class="small text-secondary">Mã: {{ p.MaSP }} · Tồn kho: 
+                {% if p.TongTonKho > 0 %}
+                    <strong class="text-success">{{ p.TongTonKho }}</strong>
+                {% else %}
+                    <strong class="text-danger">Hết hàng</strong>
+                {% endif %}
+            </div>
+            <div class="text-primary fw-bold my-2">{{ '{:,.0f}'.format(p.DonGia) }} VNĐ</div>
+            <label class="form-label">Số lượng</label>
+            <input class="form-control quantity validate-field" data-rule="quantity" data-stock="{{ p.TongTonKho }}" type="number" name="quantity_{{ p.MaSP }}" min="1" step="1" value="1" disabled>
+            <div class="validation-message small mt-1" aria-live="polite"></div>
+        </div>
+    </div>
+</div>
+{% else %}
+<p>Chưa có sản phẩm.</p>
+{% endfor %}
+</div>
+<div class="col-12"><button class="btn btn-primary">Gửi đơn hàng</button></div></form></section>
+
+<section class="tab-pane fade" id="cancel"><h2 class="h5 mb-3">Yêu cầu hủy đơn</h2><p class="text-secondary">Chỉ hủy được đơn đang ở trạng thái “Chờ xác nhận”. Sau khi nhân viên xác nhận, khách hàng không thể tự hủy trên giao diện này.</p><form method="post" action="{{ url_for('cancel_order') }}" class="row g-3"><div class="col-md-5"><label class="form-label">Mã đơn hàng *</label><input class="form-control validate-field" data-rule="orderid" name="order_id" placeholder="DHxxxxxxxx" required><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-md-5"><label class="form-label">CCCD khách hàng *</label><input class="form-control validate-field" data-rule="cccd" name="customer_cccd" pattern="[0-9]{12}" maxlength="12" required><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-12"><button class="btn btn-danger">Hủy đơn hàng</button></div></form></section>
+<section class="tab-pane fade {% if lookup_cccd %}show active{% endif %}" id="lookup"><h2 class="h5 mb-3">Tra cứu đơn hàng của khách hàng</h2><form method="get" action="{{ url_for('user_portal') }}" class="row g-2 mb-3"><div class="col-md-5"><label class="form-label">CCCD khách hàng</label><input class="form-control validate-field" data-rule="cccd" name="customer_cccd" value="{{ lookup_cccd }}" pattern="[0-9]{12}" maxlength="12" required><div class="validation-message small mt-1" aria-live="polite"></div></div><div class="col-auto align-self-end"><button class="btn btn-outline-primary">Tra cứu</button></div></form>{% if lookup_cccd and lookup_cccd|length == 12 %}<div class="table-responsive"><table class="table table-striped align-middle"><thead><tr><th>Mã đơn</th><th>Ngày đặt</th><th>Trạng thái</th><th>Người nhận</th><th>Địa chỉ</th><th>Hóa đơn</th></tr></thead><tbody>{% for o in customer_orders %}<tr><td>{{ o.MaDH }}</td><td>{{ o.NgayDat }}</td><td>{{ o.TrangThai }}</td><td>{{ o.TenNguoiNhan }}</td><td>{{ o.DiaChiNhanHang }}</td><td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('customer_invoice', order_id=o.MaDH, customer_cccd=lookup_cccd) }}">Xem hóa đơn</a></td></tr>{% else %}<tr><td colspan="6" class="text-center">Không có đơn hàng.</td></tr>{% endfor %}</tbody></table></div>{% endif %}</section>
+</div><script>
+// Mở đúng tab khi URL có #order, #cancel, #register
+window.addEventListener('DOMContentLoaded', () => {
+    if (window.location.hash) {
+        const tabBtn = document.querySelector(`[data-bs-target="${window.location.hash}"]`);
+        if (tabBtn && window.bootstrap) new bootstrap.Tab(tabBtn).show();
+    }
+});
+
+document.querySelectorAll('.product-check').forEach(c=>c.addEventListener('change',()=>{const q=c.closest('.card-body').querySelector('.quantity');q.disabled=!c.checked;q.required=c.checked;if(c.checked) validateField(q);else clearField(q);}));
+function checkValue(el){const v=el.value.trim(), rule=el.dataset.rule; if(!v && !el.required) return ''; if(!v) return 'Trường này không được để trống.';
+switch(rule){
+    case 'orderid':return v.length>=3?'':'Mã đơn hàng phải có ít nhất 3 ký tự.';
+    case 'cccd':return /^\d{12}$/.test(v)?'':'CCCD phải gồm đúng 12 chữ số.';
+    case 'phone':return /^0\d{9,10}$/.test(v)?'':'Số điện thoại phải bắt đầu bằng 0 và gồm 10 hoặc 11 chữ số.';
+    case 'email':return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)?'':'Email chưa đúng định dạng, ví dụ ten@email.com.';
+    case 'name':return v.length>=2?'':'Vui lòng nhập ít nhất 2 ký tự.';
+    case 'address':return v.length>=5?'':'Địa chỉ cần có ít nhất 5 ký tự.';
+    case 'quantity':{
+        const num = Number(v);
+        if(!Number.isInteger(num) || num <= 0) return 'Số lượng phải là số nguyên lớn hơn 0.';
+        const stock = Number(el.dataset.stock);
+        if(!Number.isNaN(stock) && num > stock) return `Số lượng vượt quá tồn kho (Chỉ còn ${stock} sản phẩm).`;
+        return '';
+    }
+    case 'birth':return new Date(v)<new Date(new Date().toDateString())?'':'Ngày sinh phải nằm trong quá khứ.';
+    default:return '';
+}}
+function validateField(el){if(el.disabled)return true;const msg=checkValue(el),box=el.parentElement.querySelector('.validation-message');el.classList.toggle('is-invalid',!!msg);el.classList.toggle('is-valid',!msg&&!!el.value.trim());if(box){box.textContent=msg||(el.value.trim()?'Thông tin hợp lệ.':'');box.className='validation-message small mt-1 '+(msg?'text-danger':'text-success');}return !msg;}
+function clearField(el){el.classList.remove('is-valid','is-invalid');const box=el.parentElement.querySelector('.validation-message');if(box)box.textContent='';}
+document.querySelectorAll('.validate-field').forEach(el=>{el.addEventListener('input',()=>validateField(el));el.addEventListener('change',()=>validateField(el));});
+document.querySelectorAll('form').forEach(form=>form.addEventListener('submit',e=>{const fields=[...form.querySelectorAll('.validate-field')].filter(el=>!el.disabled);const ok=fields.map(validateField).every(Boolean);if(!ok){e.preventDefault();fields.find(el=>!checkValue(el))?.focus();}}));
+</script>{% endblock %}

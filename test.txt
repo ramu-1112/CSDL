@@ -1,0 +1,25 @@
+Đăng kí nguời dùng: 
+CCCD: 001201000088 
+Họ tên: Trần Minh Quân 
+Ngày sinh: 2000-05-15
+Giới tính: Nam 
+SĐT: 0918888881 
+Email: quan1@example.com 
+Địa chỉ: 15 Cầu Giấy, Hà Nội.
+
+1 nguời có nhiều email và số điện thoại:
+CCCD: 001201000088
+Họ tên: Trần Minh Quân 
+SĐT thứ 2: 0918888882 
+Email thứ 2: quan2.work@example.com
+
+Nhân viên đăng kí là khách hàng:
+Họ tên: Đặng Quốc Phong 
+CCCD: 001201000006 
+SĐT 0902000006 
+Địa chỉ: 88 Giải Phóng, Hà Nội
+
+Đặt hàng:
+Chặn vượt tồn kho
+Tra cứu đơn hàng
+Hủy đơn hàng

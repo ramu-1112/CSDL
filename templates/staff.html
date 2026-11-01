@@ -1,0 +1,234 @@
+{% extends 'base.html' %}{% block title %}Khu vực nhân viên{% endblock %}{% block content %}
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="h3">Khu vực nhân viên</h1>
+        <p class="text-secondary">Xác nhận đơn hàng, quản lý trạng thái, xem hóa đơn và báo cáo doanh thu.</p>
+    </div>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Trang chủ</a>
+</div>
+
+<!-- Thanh điều hướng các Tab -->
+<ul class="nav nav-tabs mt-4">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#confirm">Xác nhận đơn
+            hàng</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#manage">Quản lý đơn
+            hàng</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#revenue">Báo cáo doanh
+            thu</button></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('invoice') }}">Xuất hóa đơn</a></li>
+</ul>
+
+<div class="tab-content border border-top-0 rounded-bottom bg-white p-3">
+
+    <!-- TAB 1: XÁC NHẬN ĐƠN HÀNG -->
+    <section class="tab-pane fade show active" id="confirm">
+        <h2 class="h5">Đơn đang chờ xác nhận</h2>
+        <p class="small text-secondary">Khi xác nhận, hệ thống tự động chọn ngẫu nhiên một shipper hiện có và tạo thông
+            tin vận chuyển.</p>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Người nhận</th>
+                        <th>Địa chỉ</th>
+                        <th>Sản phẩm & Số lượng</th>
+                        <th>Ngày đặt</th>
+                        <th>Nhân viên xác nhận</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in pending_orders %}
+                    <tr>
+                        <td>{{ o.MaDH }}</td>
+                        <td>{{ o.customer_name }}<div class="small text-secondary">{{ o.CCCD_KH }}</div>
+                        </td>
+                        <td>{{ o.TenNguoiNhan }}<div class="small">{{ o.SDTNguoiNhan }}</div>
+                        </td>
+                        <td>{{ o.DiaChiNhanHang }}</td>
+                        <td>
+                            {% if o.items_summary %}
+                            <div class="small">{{ o.items_summary | safe }}</div>
+                            {% else %}
+                            <span class="text-secondary small">Không có SP</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ o.NgayDat }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('confirm_order') }}" class="d-flex gap-2">
+                                <input type="hidden" name="order_id" value="{{ o.MaDH }}">
+                                <select class="form-select form-select-sm" name="employee_cccd" required>
+                                    <option value="">Chọn NV</option>
+                                    {% for e in employees %}<option value="{{ e.CCCD }}">{{ e.HoTen }} ({{ e.CCCD }})
+                                    </option>{% endfor %}
+                                </select>
+                                <button class="btn btn-sm btn-success" {% if not employees or not shippers %}disabled{%
+                                    endif %}>Xác nhận</button>
+                            </form>
+                            {% if not shippers %}<div class="small text-danger mt-1">Chưa có shipper để phân công.</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-secondary">Không có đơn chờ xác nhận.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- TAB 2: QUẢN LÝ ĐƠN HÀNG & CẬP NHẬT TRẠNG THÁI THEO QUY TRÌNH 1 CHIỀU -->
+    <section class="tab-pane fade" id="manage">
+        <h2 class="h5">Quản lý và cập nhật tiến trình đơn hàng</h2>
+        <p class="small text-secondary">
+            Quy trình một chiều: <strong>Chờ xác nhận</strong> → <strong>Đã xác nhận</strong> → <strong>Đang
+                giao</strong> → <strong>Đã giao thành công / Trả hàng</strong>. Đơn hàng chỉ tiến về đích và không thể
+            quay lại trạng thái trước.
+        </p>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Khách hàng</th>
+                        <th>Người nhận / địa chỉ</th>
+                        <th>Trạng thái đơn</th>
+                        <th>Shipper phân công</th>
+                        <th>Thay đổi trạng thái</th>
+                        <th>Hóa đơn</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                    <tr>
+                        <td>{{ o.MaDH }}<div class="small text-secondary">{{ o.NgayDat }}</div>
+                        </td>
+                        <td>{{ o.customer_name }}</td>
+                        <td>{{ o.TenNguoiNhan }}<div class="small text-secondary">{{ o.SDTNguoiNhan }} · {{
+                                o.DiaChiNhanHang }}</div>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if o.TrangThai=='Chờ xác nhận' %}bg-warning text-dark
+                                {% elif o.TrangThai in ('Đã xác nhận', 'Chờ lấy hàng') %}bg-info text-dark
+                                {% elif o.TrangThai=='Đang giao' %}bg-primary
+                                {% elif o.TrangThai=='Đã giao' %}bg-success
+                                {% elif o.TrangThai in ('Trả hàng', 'Đã hủy', 'Giao thất bại') %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ 'Đã giao thành công' if o.TrangThai=='Đã giao' else o.TrangThai }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if o.shipper_name %}
+                            <strong>{{ o.shipper_name }}</strong>
+                            <div class="small text-secondary">{{ o.KhuVuc or '' }} · {{ o.BienSo or '' }}</div>
+                            {% else %}
+                            <span class="text-secondary">Chưa phân công</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if o.TrangThai in ('Đã xác nhận', 'Chờ lấy hàng') %}
+                            <!-- Bước 1 -> Bước 2: Chỉ được chuyển sang Đang giao -->
+                            <form method="post" action="{{ url_for('update_order_status') }}" class="d-flex gap-1">
+                                <input type="hidden" name="order_id" value="{{ o.MaDH }}">
+                                <select class="form-select form-select-sm" name="new_status" required
+                                    style="width: 165px;">
+                                    <option value="Đang giao" selected>→ Đang giao</option>
+                                </select>
+                                <button class="btn btn-sm btn-primary" type="submit">Chuyển</button>
+                            </form>
+                            {% elif o.TrangThai == 'Đang giao' %}
+                            <!-- Bước 2 -> Đích: Chỉ được chuyển sang Đã giao thành công hoặc Trả hàng -->
+                            <form method="post" action="{{ url_for('update_order_status') }}" class="d-flex gap-1">
+                                <input type="hidden" name="order_id" value="{{ o.MaDH }}">
+                                <select class="form-select form-select-sm" name="new_status" required
+                                    style="width: 165px;">
+                                    <option value="" disabled selected>Chọn kết quả giao</option>
+                                    <option value="Đã giao">✓ Đã giao thành công</option>
+                                    <option value="Trả hàng">↺ Trả hàng</option>
+                                </select>
+                                <button class="btn btn-sm btn-success" type="submit">Hoàn tất</button>
+                            </form>
+                            {% elif o.TrangThai == 'Chờ xác nhận' %}
+                            <span class="text-warning small"><em>Vui lòng xác nhận đơn</em></span>
+                            {% else %}
+                            <span class="text-secondary small"><em>Đã hoàn thành đơn</em></span>
+                            {% endif %}
+                        </td>
+                        <td><a class="btn btn-sm btn-outline-primary"
+                                href="{{ url_for('invoice', order_id=o.MaDH) }}">Xem hóa đơn</a></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center">Chưa có đơn hàng.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- TAB 3: BÁO CÁO DOANH THU -->
+    <section class="tab-pane fade" id="revenue">
+        <h2 class="h5 mb-3">Báo cáo doanh thu tổng hợp</h2>
+        <p class="text-secondary small">Thống kê doanh số từ các đơn hàng đã giao dịch thành công (trạng thái:
+            <strong>Đã giao</strong>).
+        </p>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="p-3 border rounded bg-light">
+                    <h6 class="text-muted">Tổng doanh thu thực tế</h6>
+                    <h3 class="text-success fw-bold">{{ '{:,.0f}'.format(revenue_data.total_revenue) }} VNĐ</h3>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="p-3 border rounded bg-light">
+                    <h6 class="text-muted">Tổng số đơn giao thành công</h6>
+                    <h3 class="text-primary fw-bold">{{ revenue_data.total_success_orders }} đơn</h3>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="h6 mt-4">Chi tiết doanh thu theo sản phẩm</h3>
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Mã SP</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Tổng số lượng đã bán</th>
+                        <th>Tổng doanh thu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in revenue_data.product_sales %}
+                    <tr>
+                        <td>{{ p.MaSP }}</td>
+                        <td>{{ p.TenSP }}</td>
+                        <td>{{ p.total_qty }}</td>
+                        <td class="fw-bold text-success">{{ '{:,.0f}'.format(p.total_amount) }} VNĐ</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-secondary">Chưa có dữ liệu sản phẩm bán thành công.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        if (window.location.hash) {
+            const tabBtn = document.querySelector(`[data-bs-target="${window.location.hash}"]`);
+            if (tabBtn && window.bootstrap) new bootstrap.Tab(tabBtn).show();
+        }
+    });
+</script>
+{% endblock %}

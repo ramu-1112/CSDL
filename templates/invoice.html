@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Xuất hóa đơn{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3">Hóa đơn bán hàng</h1>{% if staff_view %}<a class="btn btn-outline-secondary" href="{{ url_for('staff_portal') }}">Quay lại khu vực nhân viên</a>{% else %}<a class="btn btn-outline-secondary" href="{{ url_for('user_portal', customer_cccd=customer_cccd) }}">Quay lại tra cứu đơn hàng</a>{% endif %}
+</div>
+{% if staff_view %}<form method="get" class="row g-2 mb-4">
+  <div class="col-sm-5"><label class="form-label">Mã đơn hàng</label><input class="form-control" name="order_id"
+      value="{{ request.args.get('order_id','') }}" required></div>
+  <div class="col-auto align-self-end"><button class="btn btn-primary">Xem hóa đơn</button></div>
+</form>{% endif %}
+{% if invoice %}
+<div class="invoice-paper p-4 border rounded">
+  <div class="text-center mb-4">
+    <h2>HÓA ĐƠN BÁN HÀNG</h2>
+    <p>Hệ thống quản lý bán hàng và vận chuyển</p>
+  </div>
+  <div class="row mb-3">
+    <div class="col-md-6"><strong>Mã đơn:</strong> {{ invoice.header.order_id }}</div>
+    <div class="col-md-6"><strong>Ngày đặt:</strong> {{ invoice.header.order_date }}</div>
+    <div class="col-md-6"><strong>Khách hàng:</strong> {{ invoice.header.customer_name }}</div>
+    <div class="col-md-6"><strong>CCCD:</strong> {{ invoice.header.customer_cccd }}</div>
+    <div class="col-md-6"><strong>Người nhận:</strong> {{ invoice.header.recipient }}</div>
+    <div class="col-md-6"><strong>SĐT người nhận:</strong> {{ invoice.header.recipient_phone }}</div>
+    <div class="col-12"><strong>Địa chỉ nhận:</strong> {{ invoice.header.recipient_address }}</div>
+    <div class="col-md-6"><strong>Trạng thái:</strong> {{ invoice.header.order_status or 'Chưa cập nhật' }}</div>
+    <div class="col-md-6"><strong>Thanh toán:</strong> {{ invoice.header.payment_method or 'Chưa cập nhật' }}</div>
+  </div>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Mã SP</th>
+        <th>Sản phẩm</th>
+        <th>Số lượng</th>
+        <th>Đơn giá</th>
+        <th>Thành tiền</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in invoice["items"] %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ item.product_id }}</td>
+        <td>{{ item.product_name }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ "{:,.0f}".format(item.unit_price) }}</td>
+        <td>{{ "{:,.0f}".format(item.line_total) }}</td>
+      </tr>
+      {% else %}<tr>
+        <td colspan="6" class="text-center">Đơn hàng chưa có sản phẩm.</td>
+      </tr>{% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="5" class="text-end">Tổng cộng</th>
+        <th>{{ "{:,.0f}".format(invoice.total) }}</th>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="text-end no-print"><button class="btn btn-dark" onclick="window.print()">In hóa đơn</button></div>
+</div>
+{% endif %}
+{% endblock %}

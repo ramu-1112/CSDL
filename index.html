@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Quản lý bán hàng{% endblock %}
+{% block content %}
+<h1 class="h3">Quản lý khách hàng và đơn hàng</h1>
+<p class="text-secondary">Ứng dụng được ghép theo các bảng trong file SQL của bạn: NGUOI_DUNG, KHACH_HANG, DON_HANG,
+  CT_DON_HANG và SAN_PHAM.</p>
+<ul class="nav nav-tabs mt-4">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab1" type="button">Tab 1 —
+      Đăng khách hàng</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab2" type="button">Tab 2 — Đặt
+      hàng</button></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('invoice') }}">Tab 3 — In hóa đơn</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{ url_for('search_customers') }}">Tab 4 — Tìm khách hàng</a></li>
+</ul>
+<div class="tab-content panel p-4 border border-top-0 rounded-bottom">
+  <section class="tab-pane fade show active" id="tab1">
+    <h2 class="h5">Đăng ký khách hàng mới</h2>
+    <form method="post" action="{{ url_for('create_customer') }}" class="row g-3">
+      <div class="col-md-4"><label class="form-label">CCCD (12 chữ số) *</label><input class="form-control" name="cccd"
+          pattern="[0-9]{12}" maxlength="12" required></div>
+      <div class="col-md-8"><label class="form-label">Họ tên *</label><input class="form-control" name="name"
+          maxlength="100" required></div>
+      <div class="col-md-4"><label class="form-label">Ngày sinh</label><input class="form-control" type="date"
+          name="birth_date"></div>
+      <div class="col-md-4"><label class="form-label">Giới tính</label><select class="form-select" name="gender">
+          <option value="">-- Chọn --</option>
+          <option>Nam</option>
+          <option>Nữ</option>
+          <option>Khác</option>
+        </select></div>
+      <div class="col-md-4"><label class="form-label">Số điện thoại *</label><input class="form-control" name="phone"
+          maxlength="15" required></div>
+      <div class="col-md-6"><label class="form-label">Email</label><input class="form-control" type="email" name="email"
+          maxlength="100"></div>
+      <div class="col-md-6"><label class="form-label">Địa chỉ</label><input class="form-control" name="address"
+          maxlength="255"></div>
+      <div class="col-12"><button class="btn btn-primary">Đăng ký khách hàng</button></div>
+    </form>
+    <p class="small text-secondary mt-3 mb-0">Hệ thống sẽ thêm dữ liệu vào NGUOI_DUNG, KHACH_HANG, NGUOI_DUNG_VAITRO,
+      NGUOI_DUNG_SDT và nếu có email thì NGUOI_DUNG_EMAIL.</p>
+  </section>
+  <section class="tab-pane fade" id="tab2">
+    <h2 class="h5">Tạo đơn hàng</h2>
+    <form method="post" action="{{ url_for('create_order') }}" class="row g-3">
+      <div class="col-md-4"><label class="form-label">CCCD khách hàng *</label><input class="form-control"
+          name="customer_cccd" pattern="[0-9]{12}" maxlength="12" required></div>
+      <div class="col-md-4"><label class="form-label">Phương thức thanh toán</label><input class="form-control"
+          name="payment_method" maxlength="30" placeholder="Tiền mặt / chuyển khoản"></div>
+      <div class="col-md-4"><label class="form-label">Tên người nhận *</label><input class="form-control"
+          name="recipient" maxlength="100" required></div>
+      <div class="col-md-4"><label class="form-label">SĐT người nhận *</label><input class="form-control"
+          name="recipient_phone" maxlength="15" required></div>
+      <div class="col-md-4"><label class="form-label">Trạng thái</label><input class="form-control" name="status"
+          maxlength="255"></div>
+      <div class="col-md-8"><label class="form-label">Địa chỉ nhận hàng *</label><input class="form-control"
+          name="recipient_address" maxlength="255" required></div>
+      <div class="col-md-4"><label class="form-label">Ghi chú</label><input class="form-control" name="note"
+          maxlength="255"></div>
+      <div class="col-12"><button class="btn btn-primary">Tạo đơn hàng</button></div>
+      <h5 class="mt-4">Danh sách sản phẩm</h5>
+  
+      <div class="row">
+        {% for product in products %}
+        <div class="col-md-4 mb-3">
+          <div class="card h-100">
+            <div class="card-body">
+  
+              <div class="form-check">
+                <input class="form-check-input product-checkbox" type="checkbox" name="product_ids"
+                  value="{{ product.MaSP }}" id="product_{{ product.MaSP }}">
+  
+                <label class="form-check-label fw-bold" for="product_{{ product.MaSP }}">
+                  {{ product.TenSP }}
+                </label>
+              </div>
+  
+              <p class="text-muted mt-2 mb-2">
+                Mã: {{ product.MaSP }}
+              </p>
+  
+              <p class="text-primary fw-bold">
+                {{ "{:,.0f}".format(product.DonGia) }} VNĐ
+              </p>
+  
+              <label>Số lượng</label>
+  
+              <input type="number" class="form-control product-quantity" name="quantity_{{ product.MaSP }}" min="1"
+                value="1" disabled>
+  
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <p>Chưa có sản phẩm nào trong hệ thống.</p>
+        {% endfor %}
+      </div>
+  
+      <script>
+        document.querySelectorAll(".product-checkbox").forEach(checkbox => {
+          checkbox.addEventListener("change", function () {
+            const card = this.closest(".card-body");
+            const quantity = card.querySelector(".product-quantity");
+  
+            quantity.disabled = !this.checked;
+            quantity.required = this.checked;
+          });
+        });
+      </script>
+  </section>
+  </div>
+    </form>
+    <p class="small text-secondary mt-3 mb-0">Bản mẫu cho phép thêm một sản phẩm trong mỗi đơn. Chưa tự trừ tồn kho hoặc
+      tạo vận chuyển; cần bổ sung nghiệp vụ riêng.</p>
+{% endblock %}
